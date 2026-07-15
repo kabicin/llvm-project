@@ -348,6 +348,26 @@
         ]
       }
     },
+    "//:linux_uapi.bzl%linux_uapi_extension": {
+      "general": {
+        "bzlTransitiveDigest": "aBfOqn7+Mfd2lwLjixxgozduDlMGfYjFYWvFricORls=",
+        "usagesDigest": "G81HAnS3KnGMbPj6o/0DMLpok2TxkHQLtHdipG9xooY=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {
+          "LINUX_UAPI_INCLUDE_DIR": "/usr/local/google/home/jtstogel/kernel-headers/include"
+        },
+        "generatedRepoSpecs": {
+          "linux_uapi": {
+            "repoRuleId": "@@//:linux_uapi.bzl%_linux_uapi_system_setup",
+            "attributes": {
+              "include_dir": "/usr/local/google/home/jtstogel/kernel-headers/include"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": []
+      }
+    },
     "@@pybind11_bazel+//:internal_configure.bzl%internal_configure_extension": {
       "general": {
         "bzlTransitiveDigest": "NFQjcZF+fAvf5fDH+pqsx4JrfzP9PuHBz6S6ZutIbnw=",
