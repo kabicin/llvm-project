@@ -1599,6 +1599,128 @@ getVectorIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
   return -1;
 }
 
+// Throughput costs (instruction counts). "a/b" is zero-defined/zero-poison,
+// N is the number of vector registers. Scalar and i128 costs apply to
+// TCK_RecipThroughput only; other cost kinds use the generic cost so that
+// SimplifyCFG still speculates these calls.
+//
+//   ctlz      i8   i16  i32  i64  i128  vector
+//   z13       4/2  4/2  3/2  1    26    N
+//   z14-z16   4/2  4/2  3/2  1    24    N
+//   z17       4/2  4/2  3/2  1    1     N
+//
+//   cttz      i8   i16  i32  i64  i128  vector
+//   z13       5    8    9    6/4  8     N
+//   z14       5    8    9    6/4  6     N
+//   z15-z16   4    4    4    3    6     N
+//   z17       2/1  2/1  2/1  1    1     N
+//
+//   ctpop     i8   i16  i32  i64  i128  vector (i8 / i16 / i32 / i64 elements)
+//   z13       2    5    6    8    5     N / 4N / 2N+1 / 3N+1
+//   z14       2    5    6    8    3     N
+//   z15-z17   2    2    2    1    3     N
+static int getBitCountIntrinsicCost(const IntrinsicCostAttributes &ICA,
+                                    TTI::TargetCostKind CostKind,
+                                    const SystemZSubtarget *ST) {
+  Intrinsic::ID ID = ICA.getID();
+  if (ID != Intrinsic::ctlz && ID != Intrinsic::cttz && ID != Intrinsic::ctpop)
+    return -1;
+
+  Type *RetTy = ICA.getReturnType();
+  unsigned BitWidth = RetTy->getScalarSizeInBits();
+
+  if (auto *VTy = dyn_cast<FixedVectorType>(RetTy)) {
+    if (!ST->hasVector() || !isPowerOf2_32(BitWidth) || BitWidth < 8 ||
+        BitWidth > 64)
+      return -1;
+    unsigned NumVectors = getNumVectorRegs(VTy);
+    if (ID != Intrinsic::ctpop || ST->hasVectorEnhancements1())
+      return NumVectors;
+    switch (BitWidth) {
+    case 8:
+      return NumVectors;
+    case 16:
+      return 4 * NumVectors;
+    case 32:
+      return 2 * NumVectors + 1;
+    case 64:
+      return 3 * NumVectors + 1;
+    }
+    return -1;
+  }
+
+  if (CostKind != TTI::TCK_RecipThroughput)
+    return -1;
+
+  if (BitWidth == 128) {
+    if (!ST->hasVector())
+      return -1;
+    switch (ID) {
+    case Intrinsic::ctlz:
+      if (ST->hasVectorEnhancements3())
+        return 1;
+      return ST->hasVectorEnhancements1() ? 24 : 26;
+    case Intrinsic::cttz:
+      if (ST->hasVectorEnhancements3())
+        return 1;
+      return ST->hasVectorEnhancements1() ? 6 : 8;
+    default:
+      return ST->hasVectorEnhancements1() ? 3 : 5;
+    }
+  }
+
+  if (RetTy->isVectorTy() ||
+      (BitWidth != 8 && BitWidth != 16 && BitWidth != 32 && BitWidth != 64))
+    return -1;
+
+  bool ZeroIsPoison = false;
+  if (ID != Intrinsic::ctpop && ICA.getArgs().size() > 1)
+    if (auto *C = dyn_cast<ConstantInt>(ICA.getArgs()[1]))
+      ZeroIsPoison = !C->isZero();
+
+  if (ID == Intrinsic::ctlz) {
+    if (BitWidth == 64)
+      return 1;
+    if (ZeroIsPoison)
+      return 2;
+    return BitWidth == 32 ? 3 : 4;
+  }
+
+  if (ID == Intrinsic::cttz) {
+    if (ST->hasMiscellaneousExtensions4())
+      return (BitWidth == 64 || ZeroIsPoison) ? 1 : 2;
+    if (ST->hasMiscellaneousExtensions3())
+      return BitWidth == 64 ? 3 : 4;
+    if (!ST->hasPopulationCount())
+      return -1;
+    switch (BitWidth) {
+    case 8:
+      return 5;
+    case 16:
+      return 8;
+    case 32:
+      return 9;
+    default:
+      return ZeroIsPoison ? 4 : 6;
+    }
+  }
+
+  if (ST->hasMiscellaneousExtensions3())
+    return BitWidth == 64 ? 1 : 2;
+  if (!ST->hasPopulationCount())
+    return -1;
+  switch (BitWidth) {
+  case 8:
+    return 2;
+  case 16:
+    return 5;
+  case 32:
+    return 6;
+  default:
+    return 8;
+  }
+}
+
 InstructionCost
 SystemZTTIImpl::getIntrinsicInstrCost(const IntrinsicCostAttributes &ICA,
                                       TTI::TargetCostKind CostKind) const {
@@ -1606,6 +1728,9 @@ SystemZTTIImpl::getIntrinsicInstrCost(const IntrinsicCostAttributes &ICA,
       ICA.getID(), ICA.getReturnType(), ICA.getArgTypes());
   if (Cost != -1)
     return Cost;
+  int BitCountCost = getBitCountIntrinsicCost(ICA, CostKind, ST);
+  if (BitCountCost != -1)
+    return BitCountCost;
   return BaseT::getIntrinsicInstrCost(ICA, CostKind);
 }
 
