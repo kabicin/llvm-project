@@ -17,8 +17,9 @@ define <2 x i64> @ret_v2i64(ptr %ptr) nounwind {
 ;
 ; LINUX-Z13-LABEL: ret_v2i64:
 ; LINUX-Z13:       # %bb.0:
-; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v24, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v24, %r0, %r1
 ; LINUX-Z13-NEXT:    br %r14
   %elt0 = load volatile i64, ptr %ptr
   %elt1 = load volatile i64, ptr %ptr
@@ -41,8 +42,9 @@ define { <2 x i64>, <2 x i64> } @ret_v2i64_x2(ptr %ptr) nounwind {
 ; LINUX-Z13:       # %bb.0:
 ; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
-; LINUX-Z13-NEXT:    vlrepg %v26, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v26, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v26, %r0, %r1
 ; LINUX-Z13-NEXT:    br %r14
   %elt0 = load volatile i64, ptr %ptr
   %elt1 = load volatile i64, ptr %ptr
@@ -81,10 +83,12 @@ define { <2 x i64>, <2 x i64>, <2 x i64> } @ret_v2i64_x3(ptr %ptr) nounwind {
 ; LINUX-Z13:       # %bb.0:
 ; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
-; LINUX-Z13-NEXT:    vlrepg %v26, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v26, 0(%r2), 1
-; LINUX-Z13-NEXT:    vlrepg %v28, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v28, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r3, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r2, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v26, %r0, %r1
+; LINUX-Z13-NEXT:    vlvgp %v28, %r3, %r2
 ; LINUX-Z13-NEXT:    br %r14
   %elt0 = load volatile i64, ptr %ptr
   %elt1 = load volatile i64, ptr %ptr
@@ -120,9 +124,10 @@ define { <2 x i64>, i64 } @ret_v2i64_i64(ptr %ptr) nounwind {
 ;
 ; LINUX-Z13-LABEL: ret_v2i64_i64:
 ; LINUX-Z13:       # %bb.0:
-; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v24, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r2, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v24, %r0, %r1
 ; LINUX-Z13-NEXT:    br %r14
   %elt0 = load volatile i64, ptr %ptr
   %elt1 = load volatile i64, ptr %ptr
@@ -144,9 +149,10 @@ define { i64, <2 x i64> } @ret_i64_v2i64(ptr %ptr) nounwind {
 ;
 ; LINUX-Z13-LABEL: ret_i64_v2i64:
 ; LINUX-Z13:       # %bb.0:
-; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v24, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r2, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v24, %r0, %r1
 ; LINUX-Z13-NEXT:    br %r14
   %elt0 = load volatile i64, ptr %ptr
   %elt1 = load volatile i64, ptr %ptr
@@ -170,10 +176,11 @@ define { i64, <2 x i64>, i64 } @ret_i64_v2i64_i64(ptr %ptr) nounwind {
 ;
 ; LINUX-Z13-LABEL: ret_i64_v2i64_i64:
 ; LINUX-Z13:       # %bb.0:
-; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v24, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r4, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r3, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v24, %r1, %r4
 ; LINUX-Z13-NEXT:    lgr %r2, %r0
 ; LINUX-Z13-NEXT:    br %r14
   %elt0 = load volatile i64, ptr %ptr
@@ -218,10 +225,12 @@ define <4 x i64> @ret_v4i64(ptr %ptr) nounwind {
 ;
 ; LINUX-Z13-LABEL: ret_v4i64:
 ; LINUX-Z13:       # %bb.0:
-; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v24, 0(%r2), 1
-; LINUX-Z13-NEXT:    vlrepg %v26, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v26, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r3, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r2, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v24, %r0, %r1
+; LINUX-Z13-NEXT:    vlvgp %v26, %r3, %r2
 ; LINUX-Z13-NEXT:    br %r14
   %elt0 = load volatile i64, ptr %ptr
   %elt1 = load volatile i64, ptr %ptr
@@ -255,8 +264,9 @@ define { i64, i64, i64, <2 x i64> } @ret_i64_i64_i64_v2i64(ptr %ptr) nounwind {
 ; LINUX-Z13-NEXT:    lg %r0, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r3, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r4, 0(%r2)
-; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v24, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r2, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v24, %r1, %r2
 ; LINUX-Z13-NEXT:    lgr %r2, %r0
 ; LINUX-Z13-NEXT:    br %r14
   %scalar0 = load volatile i64, ptr %ptr
@@ -298,8 +308,9 @@ define { i64, i64, i64, i64, <2 x i64> } @ret_i64_i64_i64_i64_v2i64(ptr %ptr) no
 ; LINUX-Z13-NEXT:    lg %r3, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r4, 0(%r2)
 ; LINUX-Z13-NEXT:    lg %r5, 0(%r2)
-; LINUX-Z13-NEXT:    vlrepg %v24, 0(%r2)
-; LINUX-Z13-NEXT:    vleg %v24, 0(%r2), 1
+; LINUX-Z13-NEXT:    lg %r1, 0(%r2)
+; LINUX-Z13-NEXT:    lg %r2, 0(%r2)
+; LINUX-Z13-NEXT:    vlvgp %v24, %r1, %r2
 ; LINUX-Z13-NEXT:    lgr %r2, %r0
 ; LINUX-Z13-NEXT:    br %r14
   %scalar0 = load volatile i64, ptr %ptr

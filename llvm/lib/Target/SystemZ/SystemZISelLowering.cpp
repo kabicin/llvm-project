@@ -6615,7 +6615,7 @@ SystemZTargetLowering::buildVector(SelectionDAG &DAG, const SDLoc &DL, EVT VT,
     }
 
   // The best way of building a v2i64 from two i64s is to use VLVGP.
-  if (VT == MVT::v2i64 && !AllLoads)
+  if (VT == MVT::v2i64)
     return joinDwords(DAG, DL, Elems[0], Elems[1]);
 
   // Use a 64-bit merge high to combine two doubles.
