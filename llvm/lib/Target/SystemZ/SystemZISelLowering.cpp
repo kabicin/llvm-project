@@ -8556,6 +8556,26 @@ SDValue SystemZTargetLowering::combineEXTRACT_VECTOR_ELT(
       Op.getOperand(0).getValueType().getVectorNumElements())
     Op = Op.getOperand(0);
 
+  // Convert (extract_vector_elt (add (shuffle<u,0> X), X), 1) with X of type
+  // v2i64 into (add (extract_vector_elt X, 0), (extract_vector_elt X, 1)), so
+  // that the addition is done in a general register.
+  if (Op.getOpcode() == ISD::ADD && Op.getValueType() == MVT::v2i64 &&
+      Op.hasOneUse() && isOneConstant(N->getOperand(1))) {
+    for (unsigned I = 0; I < 2; ++I) {
+      SDValue X = Op.getOperand(I);
+      auto *Shuf = dyn_cast<ShuffleVectorSDNode>(Op.getOperand(1 - I));
+      if (Shuf && Shuf->getOperand(0) == X && Shuf->getOperand(1).isUndef() &&
+          Shuf->getMaskElt(1) == 0) {
+        SDLoc DL(N);
+        SDValue Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::i64, X,
+                                 DAG.getConstant(0, DL, MVT::i32));
+        SDValue Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::i64, X,
+                                 DAG.getConstant(1, DL, MVT::i32));
+        return DAG.getNode(ISD::ADD, DL, MVT::i64, Lo, Hi);
+      }
+    }
+  }
+
   // Pull BSWAP out of a vector extraction.
   if (Op.getOpcode() == ISD::BSWAP && Op.hasOneUse()) {
     EVT VecVT = Op.getValueType();
