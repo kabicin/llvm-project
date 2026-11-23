@@ -7933,28 +7933,6 @@ SDValue SystemZTargetLowering::combineZERO_EXTEND(
       }
     }
   }
-  // Convert (i128 (zext (extract_vector_elt (add nuw (shuffle<u,0> X), X), 1)))
-  // with X of type v2i64 into (VSUM X, 0), i.e. VECTOR SUM ACROSS QUADWORD.
-  // The nuw flag guarantees that the 64-bit add does not wrap, so it equals
-  // the 128-bit sum that VSUMQG computes.
-  if (VT == MVT::i128 && isTypeLegal(VT) &&
-      N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
-      N0.getOperand(0).getValueType() == MVT::v2i64 &&
-      isOneConstant(N0.getOperand(1))) {
-    SDValue Add = N0.getOperand(0);
-    if (Add.getOpcode() == ISD::ADD && Add->getFlags().hasNoUnsignedWrap())
-      for (unsigned I = 0; I < 2; ++I) {
-        SDValue X = Add.getOperand(I);
-        auto *Shuf = dyn_cast<ShuffleVectorSDNode>(Add.getOperand(1 - I));
-        if (Shuf && Shuf->getOperand(0) == X && Shuf->getOperand(1).isUndef() &&
-            Shuf->getMaskElt(1) == 0) {
-          SDLoc DL(N);
-          SDValue Zero = DAG.getSplatBuildVector(
-              MVT::v2i64, DL, DAG.getConstant(0, DL, MVT::i64));
-          return DAG.getNode(SystemZISD::VSUM, DL, MVT::i128, X, Zero);
-        }
-      }
-  }
   // Recognize patterns for VECTOR SUBTRACT COMPUTE BORROW INDICATION
   // and VECTOR ADD COMPUTE CARRY for i128:
   //   (zext (setcc_uge X Y)) --> (VSCBI X Y)
