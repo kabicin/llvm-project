@@ -6716,31 +6716,6 @@ SystemZTargetLowering::buildVector(SelectionDAG &DAG, const SDLoc &DL, EVT VT,
   return Result;
 }
 
-// If every element of a BUILD_VECTOR is a simple load from consecutive memory
-// in element order, use one vector load instead of VLREP + VLE.
-static SDValue combineConsecutiveLoads(SelectionDAG &DAG, const SDLoc &DL,
-                                       EVT VT, ArrayRef<SDValue> Elems) {
-  unsigned EltBytes = VT.getScalarSizeInBits() / 8;
-  auto *Base = dyn_cast<LoadSDNode>(Elems[0]);
-  if (!Base || !Base->isSimple() || !Base->isUnindexed() ||
-      Base->getExtensionType() != ISD::NON_EXTLOAD)
-    return SDValue();
-  for (unsigned I = 1; I < Elems.size(); ++I) {
-    auto *Ld = dyn_cast<LoadSDNode>(Elems[I]);
-    if (!Ld || !Ld->isSimple() || !Ld->isUnindexed() ||
-        Ld->getExtensionType() != ISD::NON_EXTLOAD || !Elems[I].hasOneUse() ||
-        Ld->getMemoryVT() != Base->getMemoryVT() ||
-        !DAG.areNonVolatileConsecutiveLoads(Ld, Base, EltBytes, I))
-      return SDValue();
-  }
-  SDValue NewLd = DAG.getLoad(VT, DL, Base->getChain(), Base->getBasePtr(),
-                              Base->getPointerInfo(), Base->getAlign(),
-                              Base->getMemOperand()->getFlags());
-  for (SDValue E : Elems)
-    DAG.makeEquivalentMemoryOrdering(cast<LoadSDNode>(E), NewLd);
-  return NewLd;
-}
-
 SDValue SystemZTargetLowering::lowerBUILD_VECTOR(SDValue Op,
                                                  SelectionDAG &DAG) const {
   auto *BVN = cast<BuildVectorSDNode>(Op.getNode());
@@ -6754,12 +6729,6 @@ SDValue SystemZTargetLowering::lowerBUILD_VECTOR(SDValue Op,
     // Fall back to loading it from memory.
     return SDValue();
   }
-
-  // Use a single vector load for consecutive scalar loads.
-  SmallVector<SDValue, SystemZ::VectorBytes> Elems(Op->op_begin(),
-                                                   Op->op_end());
-  if (SDValue Res = combineConsecutiveLoads(DAG, DL, VT, Elems))
-    return Res;
 
   // See if we should use shuffles to construct the vector from other vectors.
   if (SDValue Res = tryBuildVectorShuffle(DAG, BVN))
