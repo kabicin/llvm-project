@@ -1617,7 +1617,7 @@ getVectorIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
 //
 //   ctpop     i8   i16  i32  i64  i128  vector (i8 / i16 / i32 / i64 elements)
 //   z13       2    5    6    8    5     N / 4N / 2N+1 / 3N+1
-//   z14       2    5    6    8    3     N
+//   z14       2    5    6    3    3     N
 //   z15-z17   2    2    2    1    3     N
 static int getBitCountIntrinsicCost(const IntrinsicCostAttributes &ICA,
                                     TTI::TargetCostKind CostKind,
@@ -1717,7 +1717,10 @@ static int getBitCountIntrinsicCost(const IntrinsicCostAttributes &ICA,
   case 32:
     return 6;
   default:
-    return 8;
+    // On z14 this is deliberately below the real expansion (POPCNT plus a
+    // shift-and-add reduction, 8 instructions) so that scalar i64 ctpop is not
+    // replaced by the vector form (VPOPCTG).
+    return ST->hasVectorEnhancements1() ? 3 : 8;
   }
 }
 

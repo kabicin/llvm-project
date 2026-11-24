@@ -593,7 +593,7 @@ define void @ctpop(i8 %i8, i16 %i16, i32 %i32, i64 %i64, i128 %i128, <2 x i32> %
 ; Z14-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %r_i8 = call i8 @llvm.ctpop.i8(i8 %i8)
 ; Z14-NEXT:  Cost Model: Found an estimated cost of 5 for instruction: %r_i16 = call i16 @llvm.ctpop.i16(i16 %i16)
 ; Z14-NEXT:  Cost Model: Found an estimated cost of 6 for instruction: %r_i32 = call i32 @llvm.ctpop.i32(i32 %i32)
-; Z14-NEXT:  Cost Model: Found an estimated cost of 8 for instruction: %r_i64 = call i64 @llvm.ctpop.i64(i64 %i64)
+; Z14-NEXT:  Cost Model: Found an estimated cost of 3 for instruction: %r_i64 = call i64 @llvm.ctpop.i64(i64 %i64)
 ; Z14-NEXT:  Cost Model: Found an estimated cost of 3 for instruction: %r_i128 = call i128 @llvm.ctpop.i128(i128 %i128)
 ; Z14-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %r_v2i32 = call <2 x i32> @llvm.ctpop.v2i32(<2 x i32> %v2i32)
 ; Z14-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %r_v16i8 = call <16 x i8> @llvm.ctpop.v16i8(<16 x i8> %v16i8)
